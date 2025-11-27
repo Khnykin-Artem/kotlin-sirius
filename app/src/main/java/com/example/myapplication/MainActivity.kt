@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.example.myapplication.model.Flower
 import com.example.myapplication.model.MockData
 import com.example.myapplication.ui.theme.MyApplicationTheme
+import androidx.compose.ui.tooling.preview.Preview
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,7 +33,7 @@ class MainActivity : ComponentActivity() {
             MyApplicationTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = Color(0xFFF5F5F5)
+                    color = Color(0xFFFFF0F5) // Нежно-розовый фон
                 ) {
                     FlowerListScreen()
                 }
@@ -60,19 +62,20 @@ fun FlowerCard(flower: Flower) {
         modifier = Modifier
             .fillMaxWidth()
             .height(140.dp),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFFFF0F5) // Розовый фон карточки!
+        )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Картинка цветка
-            Image(
-                painter = painterResource(id = flower.imageRes),
-                contentDescription = flower.name,
+            Text(
+                text = flower.emoji, 
+                fontSize = 50.sp,
                 modifier = Modifier
                     .size(100.dp)
             )
@@ -87,19 +90,19 @@ fun FlowerCard(flower: Flower) {
                     text = flower.name,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color = Color(0xFF880E4F)
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
                     text = flower.description,
                     fontSize = 14.sp,
-                    color = Color.Gray,
+                    color = Color(0xFF757575),
                     maxLines = 2
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -115,11 +118,38 @@ fun FlowerCard(flower: Flower) {
                     Text(
                         text = flower.category,
                         fontSize = 14.sp,
-                        color = Color(0xFF2196F3),
+                        color = Color(0xFFE91E63),
                         fontWeight = FontWeight.Medium
                     )
                 }
             }
+        }
+    }
+}
+
+@Preview(showBackground = true, device = "id:pixel_5")
+@Composable
+fun FlowerListScreenPreview() {
+    MyApplicationTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color(0xFFFFF0F5)
+        ) {
+            FlowerListScreen()
+        }
+    }
+}
+
+// Дополнительное превью для одной карточки
+@Preview(showBackground = true, widthDp = 360, heightDp = 200)
+@Composable
+fun SingleFlowerCardPreview() {
+    MyApplicationTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color(0xFFFFF0F5)
+        ) {
+            FlowerCard(flower = MockData.flowers[0])
         }
     }
 }

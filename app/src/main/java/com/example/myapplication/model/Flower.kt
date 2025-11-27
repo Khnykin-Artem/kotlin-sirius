@@ -6,7 +6,8 @@ data class Flower(
     val description: String,
     val price: Double,
     val imageRes: Int,
-    val category: String
+    val category: String,
+    val emoji: String
 )
 
 object MockData {
@@ -17,7 +18,8 @@ object MockData {
             description = "Букет из 25 свежих красных роз",
             price = 2500.0,
             imageRes = android.R.drawable.ic_menu_report_image,
-            category = "Розы"
+            category = "Розы",
+            emoji = "🌹"
         ),
         Flower(
             id = 2,
@@ -25,7 +27,8 @@ object MockData {
             description = "Элегантные белые лилии в подарочной упаковке",
             price = 1800.0,
             imageRes = android.R.drawable.ic_menu_report_image,
-            category = "Лилии"
+            category = "Лилии",
+            emoji = "💮"
         ),
         Flower(
             id = 3,
@@ -33,7 +36,8 @@ object MockData {
             description = "Нежные фиалки в горшочке",
             price = 1200.0,
             imageRes = android.R.drawable.ic_menu_report_image,
-            category = "Горшечные"
+            category = "Горшечные",
+            emoji = "🌸"
         )
     )
 }
