@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.model.MockData
+import androidx.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,15 +85,13 @@ fun ProductDetailsScreen(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+
         ) {
             // Изображение товара
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(300.dp)
-                    .background(MaterialTheme.colorScheme.surface),
-                contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "Изображение: ${flower.name}",
@@ -159,4 +158,14 @@ fun ProductDetailsScreen(
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ProductDetailsScreenPreview() {
+    ProductDetailsScreen(
+        productId = 1,
+        onBackClick = { },
+        onAddToCart = { }
+    )
 }

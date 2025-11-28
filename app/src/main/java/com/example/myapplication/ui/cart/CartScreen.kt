@@ -150,8 +150,7 @@ fun CartItem(
             Box(
                 modifier = Modifier
                     .size(80.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
+
             ) {
                 Text(
                     text = "IMG",
