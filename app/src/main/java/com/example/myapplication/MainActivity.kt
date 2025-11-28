@@ -74,7 +74,7 @@ fun FlowerCard(flower: Flower) {
                 .padding(16.dp)
         ) {
             Text(
-                text = flower.emoji, 
+                text = flower.emoji,
                 fontSize = 50.sp,
                 modifier = Modifier
                     .size(100.dp)
