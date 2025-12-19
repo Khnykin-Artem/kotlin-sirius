@@ -1,23 +1,28 @@
 package com.example.myapplication.ui.details
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.model.MockData
-import androidx.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductDetailsScreen(
     productId: Int,
-    onBackClick: () -> Unit,
-    onAddToCart: () -> Unit
+    onBackClick: () -> Unit = {},
+    onAddToCart: () -> Unit = {},
+    onCartClick: () -> Unit = {}
 ) {
     val flower = MockData.flowers.find { it.id == productId } ?: MockData.flowers.first()
 
@@ -31,128 +36,209 @@ fun ProductDetailsScreen(
                     )
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = Color(0xFFE91E63),
+                    titleContentColor = Color.White
                 ),
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Назад",
-                            tint = MaterialTheme.colorScheme.onPrimary
+                            tint = Color.White
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onCartClick) {
+                        Icon(
+                            imageVector = Icons.Default.ShoppingCart,
+                            contentDescription = "Корзина",
+                            tint = Color.White
                         )
                     }
                 }
             )
         },
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        bottomBar = {
-            Surface(
-                tonalElevation = 8.dp
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "%.2f ₽".format(flower.price),
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Button(
-                        onClick = onAddToCart,
-                        modifier = Modifier.width(200.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
-                    ) {
-                        Text(
-                            text = "Добавить в корзину",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                }
-            }
-        }
+        containerColor = Color(0xFFFCE4EC)
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
-
         ) {
-            // Изображение товара
+            // Emoji цветка (большое как в каталоге)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(300.dp)
+                    .height(250.dp)
+                    .background(Color(0xFFF8BBD9)),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Изображение: ${flower.name}",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    text = flower.emoji,
+                    style = MaterialTheme.typography.displayLarge
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Информация о товаре
-            Column(
-                modifier = Modifier.padding(16.dp)
+            // Основная карточка с информацией
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                Text(
-                    text = flower.name,
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = flower.category,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = flower.description,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.2
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Характеристики
-                Text(
-                    text = "Характеристики:",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                listOf(
-                    "Свежесть: Максимальная",
-                    "Доставка: В течение 2 часов",
-                    "Упаковка: Подарочная",
-                    "Сезон: Круглый год"
-                ).forEach { feature ->
+                Column(
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    // Название
                     Text(
-                        text = "• $feature",
+                        text = flower.name,
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Категория (как в каталоге и корзине)
+                    Badge(
+                        containerColor = Color(0xFFE91E63)
+                    ) {
+                        Text(
+                            text = flower.category,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Цена (такой же стиль как в корзине)
+                    Text(
+                        text = "Цена",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 2.dp)
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = "%.0f ₽".format(flower.price),
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = Color(0xFFE91E63),
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Кнопка "В корзину" (такая же как в каталоге)
+                    Button(
+                        onClick = onAddToCart,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE91E63)
+                        ),
+                        shape = MaterialTheme.shapes.large,
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 8.dp,
+                            pressedElevation = 4.dp
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ShoppingCart,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "В корзину",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            // Карточка с описанием
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    Text(
+                        text = "Описание",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color(0xFFC2185B),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+
+                    Text(
+                        text = flower.description,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.DarkGray,
+                        textAlign = TextAlign.Justify
+                    )
+                }
+            }
+
+            // Карточка с характеристиками (в стиле корзины)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    Text(
+                        text = "Характеристики",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color(0xFFC2185B),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    // Характеристики в виде строк как в корзине
+                    CharacteristicRow(
+                        title = "Свежесть",
+                        value = "Максимальная"
+                    )
+                    Divider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = Color.LightGray
+                    )
+                    CharacteristicRow(
+                        title = "Доставка",
+                        value = "В течение 2 часов"
+                    )
+                    Divider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = Color.LightGray
+                    )
+                    CharacteristicRow(
+                        title = "Упаковка",
+                        value = "Подарочная"
+                    )
+                    Divider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = Color.LightGray
+                    )
+                    CharacteristicRow(
+                        title = "Сезон",
+                        value = "Круглый год"
                     )
                 }
             }
@@ -160,12 +246,52 @@ fun ProductDetailsScreen(
     }
 }
 
-@Preview(showBackground = true)
+@Composable
+fun CharacteristicRow(
+    title: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Black
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color(0xFFE91E63),
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ProductDetailsScreenPreview() {
-    ProductDetailsScreen(
-        productId = 1,
-        onBackClick = { },
-        onAddToCart = { }
-    )
+    MaterialTheme {
+        ProductDetailsScreen(
+            productId = 1,
+            onBackClick = { println("Back clicked") },
+            onAddToCart = { println("Add to cart clicked") },
+            onCartClick = { println("Cart clicked") }
+        )
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun ProductDetailsScreenPreview2() {
+    MaterialTheme {
+        ProductDetailsScreen(
+            productId = 2,
+            onBackClick = { println("Back clicked") },
+            onAddToCart = { println("Add to cart clicked") },
+            onCartClick = { println("Cart clicked") }
+        )
+    }
 }

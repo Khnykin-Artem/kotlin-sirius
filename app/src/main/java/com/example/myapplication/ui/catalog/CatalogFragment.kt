@@ -1,77 +1,44 @@
-
 package com.example.myapplication.ui.catalog
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
-import com.example.myapplication.R
-import com.example.myapplication.databinding.FragmentCatalogBinding
-import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import com.example.myapplication.model.MockData
 
-@AndroidEntryPoint
-class CatalogFragment : Fragment(R.layout.fragment_catalog) {
+class CatalogFragment : Fragment() {
 
-    private var _binding: FragmentCatalogBinding? = null
-    private val binding get() = _binding!!
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        return ComposeView(requireContext()).apply {
+            // Важно для правильной работы жизненного цикла Compose во Fragment
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
 
-    private val viewModel: CatalogViewModel by viewModels()
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentCatalogBinding.bind(view)
-
-        setupComposeView()
-        observeViewModel()
-    }
-
-    private fun setupComposeView() {
-        binding.composeView.setContent {
-            CatalogScreen(
-                onCartClick = { /* Handle cart click */ },
-                onProductClick = { /* Handle product click */ }
-            )
-        }
-    }
-
-    private fun observeViewModel() {
-        lifecycleScope.launch {
-            viewModel.flowers.collectLatest { flowers ->
-                // Update Compose with new flowers data
-                updateFlowersInCompose(flowers)
+            setContent {
+                CatalogScreen(
+                    flowers = MockData.flowers,
+                    categories = MockData.flowers.map { it.category }.distinct(),
+                    selectedCategory = null,
+                    onCartClick = {
+                        // TODO: Перейти в корзину
+                        println("Корзина clicked")
+                    },
+                    onProductClick = { productId ->
+                        // TODO: Перейти к деталям товара
+                        println("Товар clicked: $productId")
+                    },
+                    onCategorySelect = { category ->
+                        // Фильтрация по категории (пока просто логируем)
+                        println("Выбрана категория: $category")
+                    }
+                )
             }
         }
-
-        lifecycleScope.launch {
-            viewModel.categories.collectLatest { categories ->
-                // Update Compose with new categories
-                updateCategoriesInCompose(categories)
-            }
-        }
-    }
-
-    private fun updateFlowersInCompose(flowers: List<com.example.myapplication.model.Flower>) {
-        // This would be handled by Compose recomposition with state
-        binding.composeView.setContent {
-            CatalogScreen(
-                flowers = flowers,
-                categories = viewModel.categories.value,
-                onCartClick = { /* Handle cart click */ },
-                onProductClick = { /* Handle product click */ },
-                onCategorySelect = { category -> viewModel.selectCategory(category) }
-            )
-        }
-    }
-
-    private fun updateCategoriesInCompose(categories: List<String>) {
-        // Compose will automatically recompose when state changes
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }

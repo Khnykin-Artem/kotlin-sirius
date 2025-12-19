@@ -12,14 +12,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.model.Flower
 import com.example.myapplication.model.MockData
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogScreen(
-    onCartClick: () -> Unit,
-    onProductClick: (Int) -> Unit
+    onCartClick: () -> Unit = {},
+    onProductClick: (Int) -> Unit = {}
 ) {
     val flowers = MockData.flowers
     val categories = flowers.map { it.category }.distinct()
@@ -78,12 +80,25 @@ fun CatalogScreen(
                             containerColor = Color.White
                         )
                     ) {
-                        Text(
-                            text = category,
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(16.dp),
-                            textAlign = TextAlign.Center
-                        )
+                        Row(
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Emoji категории
+                            Text(
+                                text = getCategoryEmoji(category, flowers),
+                                style = MaterialTheme.typography.headlineMedium,
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                            Text(
+                                text = category,
+                                style = MaterialTheme.typography.titleMedium,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
 
@@ -108,10 +123,15 @@ fun CatalogScreen(
     }
 }
 
+// Функция для получения emoji категории
+private fun getCategoryEmoji(category: String, flowers: List<Flower>): String {
+    return flowers.firstOrNull { it.category == category }?.emoji ?: "🌸"
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FlowerCard(
-    flower: com.example.myapplication.model.Flower,
+    flower: Flower,
     onProductClick: () -> Unit
 ) {
     Card(
@@ -127,22 +147,42 @@ fun FlowerCard(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Заглушка для изображения
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .background(Color(0xFFF8BBD9)),
-                contentAlignment = Alignment.Center
+            // Верхняя часть с emoji и категорией
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Изображение: ${flower.name}",
-                    color = Color(0xFFC2185B)
-                )
+                // Emoji цветка
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .background(Color(0xFFF8BBD9), shape = MaterialTheme.shapes.medium),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = flower.emoji,
+                        style = MaterialTheme.typography.displayMedium
+                    )
+                }
+
+                // Категория
+                Badge(
+                    modifier = Modifier.padding(start = 8.dp),
+                    containerColor = Color(0xFFE91E63)
+                ) {
+                    Text(
+                        text = flower.category,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Название
             Text(
                 text = flower.name,
                 style = MaterialTheme.typography.titleLarge,
@@ -151,21 +191,24 @@ fun FlowerCard(
 
             Spacer(modifier = Modifier.height(4.dp))
 
+            // Описание
             Text(
                 text = flower.description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
+                color = Color.Gray,
+                maxLines = 2
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
+            // Цена и кнопка
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "%.2f ₽".format(flower.price),
+                    text = "%.0f ₽".format(flower.price),
                     style = MaterialTheme.typography.headlineSmall,
                     color = Color(0xFFE91E63)
                 )
@@ -180,5 +223,55 @@ fun FlowerCard(
                 }
             }
         }
+    }
+}
+
+// Превью функции
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun CatalogScreenPreview() {
+    MaterialTheme {
+        CatalogScreen(
+            onCartClick = { println("Cart clicked") },
+            onProductClick = { id -> println("Product $id clicked") }
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun FlowerCardPreview() {
+    MaterialTheme {
+        FlowerCard(
+            flower = Flower(
+                id = 1,
+                name = "Красные розы",
+                description = "Букет из 25 свежих красных роз",
+                price = 2500.0,
+                imageRes = android.R.drawable.ic_menu_report_image,
+                category = "Розы",
+                emoji = "🌹"
+            ),
+            onProductClick = { println("Flower clicked") }
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 350)
+@Composable
+fun FlowerCardSmallPreview() {
+    MaterialTheme {
+        FlowerCard(
+            flower = Flower(
+                id = 2,
+                name = "Белые лилии",
+                description = "Элегантные белые лилии в подарочной упаковке",
+                price = 1800.0,
+                imageRes = android.R.drawable.ic_menu_report_image,
+                category = "Лилии",
+                emoji = "💮"
+            ),
+            onProductClick = { println("Flower clicked") }
+        )
     }
 }
