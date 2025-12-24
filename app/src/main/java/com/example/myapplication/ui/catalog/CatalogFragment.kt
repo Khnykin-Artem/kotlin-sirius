@@ -8,7 +8,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.ui.cart.CartScreen
 import com.example.myapplication.ui.details.ProductDetailsScreen
+import com.example.myapplication.ui.viewmodel.CartViewModel
 
 class CatalogFragment : Fragment() {
 
@@ -22,22 +25,24 @@ class CatalogFragment : Fragment() {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
 
             setContent {
-                CatalogNavigation()
+                val cartViewModel: CartViewModel = viewModel()
+                CatalogNavigation(cartViewModel)
             }
         }
     }
 }
 
 @Composable
-fun CatalogNavigation() {
+fun CatalogNavigation(cartViewModel: CartViewModel) {
     var currentScreen by remember { mutableStateOf<CatalogScreen>(CatalogScreen.Catalog) }
 
     when (currentScreen) {
         is CatalogScreen.Catalog -> {
             CatalogScreen(
+                cartViewModel = cartViewModel,
                 onCartClick = {
-                    // TODO: Перейти в корзину
-                    println("Корзина clicked")
+                    // Перейти в корзину
+                    currentScreen = CatalogScreen.Cart
                 },
                 onProductClick = { productId ->
                     // Перейти к деталям товара
@@ -49,15 +54,31 @@ fun CatalogNavigation() {
             val productId = (currentScreen as CatalogScreen.ProductDetails).productId
             ProductDetailsScreen(
                 productId = productId,
+                cartViewModel = cartViewModel,
                 onBackClick = {
                     // Вернуться к каталогу
                     currentScreen = CatalogScreen.Catalog
                 },
                 onAddToCart = {
-                    println("Добавлено в корзину: $productId")
+                    // Добавление в корзину обрабатывается внутри ProductDetailsScreen
+                    println("Товар добавлен в корзину")
                 },
                 onCartClick = {
-                    println("Перейти в корзину")
+                    // Перейти в корзину
+                    currentScreen = CatalogScreen.Cart
+                }
+            )
+        }
+        is CatalogScreen.Cart -> {
+            CartScreen(
+                cartViewModel = cartViewModel,
+                onBackClick = {
+                    // Вернуться к каталогу
+                    currentScreen = CatalogScreen.Catalog
+                },
+                onCheckoutClick = {
+                    // TODO: Обработка оформления заказа
+                    println("Оформить заказ")
                 }
             )
         }
@@ -67,4 +88,5 @@ fun CatalogNavigation() {
 sealed class CatalogScreen {
     object Catalog : CatalogScreen()
     data class ProductDetails(val productId: Int) : CatalogScreen()
+    object Cart : CatalogScreen()
 }

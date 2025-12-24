@@ -14,15 +14,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import com.example.myapplication.data.repository.FlowerRepositoryImpl
+import com.example.myapplication.model.Flower
 import com.example.myapplication.model.FlowerDetails
 import com.example.myapplication.model.MockData
+import com.example.myapplication.ui.viewmodel.CartViewModel
 import kotlinx.coroutines.flow.firstOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductDetailsScreen(
     productId: Int,
+    cartViewModel: CartViewModel,
     onBackClick: () -> Unit = {},
     onAddToCart: () -> Unit = {},
     onCartClick: () -> Unit = {}
@@ -30,12 +34,15 @@ fun ProductDetailsScreen(
     val repository = remember { FlowerRepositoryImpl() }
     var flowerDetails by remember { mutableStateOf<FlowerDetails?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     // Загрузка данных при запуске
     LaunchedEffect(productId) {
         isLoading = true
         flowerDetails = repository.getFlowerDetailsById(productId).firstOrNull()
         isLoading = false
+        println("ProductDetailsScreen: загружен товар с id=$productId, найден=${flowerDetails != null}")
     }
 
     if (isLoading) {
@@ -53,7 +60,12 @@ fun ProductDetailsScreen(
 
     val flower = flowerDetails ?: MockData.flowerDetails.first()
 
+    // Логируем текущее состояние корзины
+    val cartItemCount by cartViewModel.cartItemCount.collectAsState()
+    println("ProductDetailsScreen: cartItemCount = $cartItemCount")
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -161,7 +173,20 @@ fun ProductDetailsScreen(
 
                     // Кнопка "В корзину" (такая же как в каталоге)
                     Button(
-                        onClick = onAddToCart,
+                        onClick = {
+                            // Конвертируем FlowerDetails в Flower для добавления в корзину
+                            val flowerForCart = Flower(
+                                id = flower.id,
+                                name = flower.name,
+                                description = flower.description,
+                                price = flower.price,
+                                imageRes = flower.imageRes,
+                                category = flower.category,
+                                emoji = flower.emoji
+                            )
+                            cartViewModel.addToCart(flowerForCart)
+                            onAddToCart()
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFFE91E63)
@@ -341,9 +366,11 @@ fun ProductDetailsScreenPreview() {
     MaterialTheme {
         // Для превью используем статичные данные, без загрузки из репозитория
         val flowerDetails = MockData.flowerDetails.find { it.id == 1 } ?: MockData.flowerDetails.first()
+        val cartViewModel = androidx.lifecycle.viewmodel.compose.viewModel<CartViewModel>()
 
         ProductDetailsScreenStatic(
             flowerDetails = flowerDetails,
+            cartViewModel = cartViewModel,
             onBackClick = { println("Back clicked") },
             onAddToCart = { println("Add to cart clicked") },
             onCartClick = { println("Cart clicked") }
@@ -357,9 +384,11 @@ fun ProductDetailsScreenPreview2() {
     MaterialTheme {
         // Для превью используем статичные данные, без загрузки из репозитория
         val flowerDetails = MockData.flowerDetails.find { it.id == 2 } ?: MockData.flowerDetails.first()
+        val cartViewModel = androidx.lifecycle.viewmodel.compose.viewModel<CartViewModel>()
 
         ProductDetailsScreenStatic(
             flowerDetails = flowerDetails,
+            cartViewModel = cartViewModel,
             onBackClick = { println("Back clicked") },
             onAddToCart = { println("Add to cart clicked") },
             onCartClick = { println("Cart clicked") }
@@ -372,6 +401,7 @@ fun ProductDetailsScreenPreview2() {
 @Composable
 fun ProductDetailsScreenStatic(
     flowerDetails: FlowerDetails,
+    cartViewModel: CartViewModel,
     onBackClick: () -> Unit = {},
     onAddToCart: () -> Unit = {},
     onCartClick: () -> Unit = {}
@@ -486,7 +516,20 @@ fun ProductDetailsScreenStatic(
 
                     // Кнопка "В корзину" (такая же как в каталоге)
                     Button(
-                        onClick = onAddToCart,
+                        onClick = {
+                            // Конвертируем FlowerDetails в Flower для добавления в корзину
+                            val flowerForCart = Flower(
+                                id = flower.id,
+                                name = flower.name,
+                                description = flower.description,
+                                price = flower.price,
+                                imageRes = flower.imageRes,
+                                category = flower.category,
+                                emoji = flower.emoji
+                            )
+                            cartViewModel.addToCart(flowerForCart)
+                            onAddToCart()
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFFE91E63)

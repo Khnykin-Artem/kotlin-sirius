@@ -3,52 +3,112 @@ package com.example.myapplication.ui.catalog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.model.Flower
 import com.example.myapplication.model.MockData
+import com.example.myapplication.ui.viewmodel.CartViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogScreen(
+    cartViewModel: CartViewModel,
     onCartClick: () -> Unit = {},
     onProductClick: (Int) -> Unit = {}
 ) {
+    val cartItemCount by cartViewModel.cartItemCount.collectAsState()
+    val cartItems by cartViewModel.cartItems.collectAsState()
+
+    // Логируем изменения корзины
+    LaunchedEffect(cartItemCount) {
+        println("CatalogScreen: cartItemCount изменился на $cartItemCount")
+        println("CatalogScreen: товары в корзине: ${cartItems.map { "${it.flower.name} x${it.quantity}" }}")
+    }
     val flowers = MockData.flowers
     val categories = flowers.map { it.category }.distinct()
+    val popularFlowers = flowers.filter { it.isPopular }
+
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    val displayedFlowers = selectedCategory?.let { category ->
+        flowers.filter { it.category == category }
+    } ?: popularFlowers
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "Цветочный магазин",
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFFE91E63),
-                    titleContentColor = Color.White
-                ),
-                actions = {
-                    IconButton(onClick = onCartClick) {
-                        Icon(
-                            imageVector = Icons.Default.ShoppingCart,
-                            contentDescription = "Корзина",
-                            tint = Color.White
+            if (selectedCategory != null) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            selectedCategory ?: "Популярные товары",
+                            style = MaterialTheme.typography.headlineSmall
                         )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFFE91E63),
+                        titleContentColor = Color.White
+                    ),
+                    navigationIcon = {
+                        IconButton(onClick = { selectedCategory = null }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Назад",
+                                tint = Color.White
+                            )
+                        }
                     }
-                }
             )
+            } else {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            selectedCategory ?: "Популярные товары",
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Color(0xFFE91E63),
+                        titleContentColor = Color.White
+                    ),
+                    actions = {
+                        val cartItemCount by cartViewModel.cartItemCount.collectAsState()
+                        BadgedBox(
+                            badge = {
+                                if (cartItemCount > 0) {
+                                    Badge(
+                                        containerColor = Color.White,
+                                        contentColor = Color(0xFFE91E63)
+                                    ) {
+                                        Text(
+                                            text = cartItemCount.toString(),
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    }
+                                }
+                            }
+                        ) {
+                            IconButton(onClick = onCartClick) {
+                                Icon(
+                                    imageVector = Icons.Default.ShoppingCart,
+                                    contentDescription = "Корзина",
+                                    tint = Color.White
+                                )
+                            }
+                        }
+                    }
+                )
+            }
         },
         containerColor = Color(0xFFFCE4EC)
     ) { paddingValues ->
@@ -57,66 +117,67 @@ fun CatalogScreen(
                 .padding(paddingValues)
                 .fillMaxSize()
         ) {
-            // Категории
-            Text(
-                text = "Категории",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(16.dp),
-                color = Color(0xFFC2185B)
-            )
-
+            // Список товаров (популярные или по категории)
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .weight(1f)
                     .padding(horizontal = 16.dp)
             ) {
-                items(categories) { category ->
-                    Card(
-                        onClick = { /* Фильтрация по категории */ },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.White
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .padding(16.dp)
-                                .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Emoji категории
-                            Text(
-                                text = getCategoryEmoji(category, flowers),
-                                style = MaterialTheme.typography.headlineMedium,
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
-                            Text(
-                                text = category,
-                                style = MaterialTheme.typography.titleMedium,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                }
-
-                // Товары
-                item {
-                    Text(
-                        text = "Популярные товары",
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(vertical = 16.dp),
-                        color = Color(0xFFC2185B)
-                    )
-                }
-
-                items(flowers) { flower ->
+                items(displayedFlowers) { flower ->
                     FlowerCard(
                         flower = flower,
-                        onProductClick = { onProductClick(flower.id) }
+                        onProductClick = { onProductClick(flower.id) },
+                        onAddToCart = { cartViewModel.addToCart(flower) }
                     )
+                }
+            }
+
+            // Категории
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Категории",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color(0xFFC2185B),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+
+                    categories.chunked(3).forEach { rowCategories ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            rowCategories.forEach { category ->
+                                CategoryChip(
+                                    category = category,
+                                    emoji = getCategoryEmoji(category, flowers),
+                                    isSelected = category == selectedCategory,
+                                    onClick = {
+                                        selectedCategory = if (selectedCategory == category) null else category
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            // Заполняем пустые места если категорий меньше 3 в ряду
+                            repeat(3 - rowCategories.size) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                        if (rowCategories != categories.takeLast(3)) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
                 }
             }
         }
@@ -132,7 +193,8 @@ private fun getCategoryEmoji(category: String, flowers: List<Flower>): String {
 @Composable
 fun FlowerCard(
     flower: Flower,
-    onProductClick: () -> Unit
+    onProductClick: () -> Unit,
+    onAddToCart: () -> Unit = {}
 ) {
     Card(
         onClick = onProductClick,
@@ -214,7 +276,7 @@ fun FlowerCard(
                 )
 
                 Button(
-                    onClick = { /* Добавить в корзину */ },
+                    onClick = onAddToCart,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFE91E63)
                     )
@@ -226,12 +288,136 @@ fun FlowerCard(
     }
 }
 
+@Composable
+fun PopularFlowerCard(
+    flower: Flower,
+    onProductClick: () -> Unit,
+    onAddToCart: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .width(160.dp)
+            .height(200.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Emoji цветка
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .background(Color(0xFFF8BBD9), shape = MaterialTheme.shapes.medium),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = flower.emoji,
+                    style = MaterialTheme.typography.displayMedium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Название
+            Text(
+                text = flower.name,
+                style = MaterialTheme.typography.titleSmall,
+                color = Color.Black,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                maxLines = 2
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Категория
+            Text(
+                text = flower.category,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFE91E63),
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Цена
+            Text(
+                text = "%.0f ₽".format(flower.price),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFFE91E63),
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Кнопка в корзину (маленькая)
+            Button(
+                onClick = onAddToCart,
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(vertical = 4.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFE91E63)
+                )
+            ) {
+                Text(
+                    text = "В корзину",
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CategoryChip(
+    category: String,
+    emoji: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        color = if (isSelected) Color(0xFFE91E63) else Color(0xFFF8BBD9),
+        shadowElevation = if (isSelected) 4.dp else 0.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = emoji,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(end = 4.dp)
+            )
+            Text(
+                text = category,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (isSelected) Color.White else Color(0xFFE91E63),
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
 // Превью функции
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun CatalogScreenPreview() {
     MaterialTheme {
+        val cartViewModel = androidx.lifecycle.viewmodel.compose.viewModel<com.example.myapplication.ui.viewmodel.CartViewModel>()
         CatalogScreen(
+            cartViewModel = cartViewModel,
             onCartClick = { println("Cart clicked") },
             onProductClick = { id -> println("Product $id clicked") }
         )
@@ -252,7 +438,8 @@ fun FlowerCardPreview() {
                 category = "Розы",
                 emoji = "🌹"
             ),
-            onProductClick = { println("Flower clicked") }
+            onProductClick = { println("Flower clicked") },
+            onAddToCart = { println("Add to cart clicked") }
         )
     }
 }
@@ -271,7 +458,8 @@ fun FlowerCardSmallPreview() {
                 category = "Лилии",
                 emoji = "💮"
             ),
-            onProductClick = { println("Flower clicked") }
+            onProductClick = { println("Flower clicked") },
+            onAddToCart = { println("Add to cart clicked") }
         )
     }
 }

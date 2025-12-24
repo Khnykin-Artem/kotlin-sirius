@@ -20,11 +20,12 @@ import com.example.myapplication.model.MockData
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartScreen(
+    cartViewModel: com.example.myapplication.ui.viewmodel.CartViewModel,
     onBackClick: () -> Unit = {},
     onCheckoutClick: () -> Unit = {}
 ) {
-    val cartItems = remember { MockData.flowers.take(3).toMutableStateList() }
-    val totalPrice = remember(cartItems) { cartItems.sumOf { it.price } }
+    val cartItems by cartViewModel.cartItems.collectAsState()
+    val totalPrice by cartViewModel.totalPrice.collectAsState()
 
     Scaffold(
         topBar = {
@@ -93,8 +94,9 @@ fun CartScreen(
                         containerColor = Color.White
                     )
                 ) {
+                    val totalItemCount by cartViewModel.cartItemCount.collectAsState()
                     Text(
-                        text = "Товаров в корзине: ${cartItems.size}",
+                        text = "Товаров в корзине: $totalItemCount",
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                         color = Color(0xFFE91E63)
@@ -109,8 +111,9 @@ fun CartScreen(
                 ) {
                     items(cartItems) { item ->
                         CartItem(
-                            flower = item,
-                            onRemove = { cartItems.remove(item) }
+                            cartItem = item,
+                            onRemove = { cartViewModel.removeFromCart(item.flower.id) },
+                            onUpdateQuantity = { quantity -> cartViewModel.updateQuantity(item.flower.id, quantity) }
                         )
                     }
                 }
@@ -231,8 +234,9 @@ fun CartScreen(
 
 @Composable
 fun CartItem(
-    flower: com.example.myapplication.model.Flower,
-    onRemove: () -> Unit
+    cartItem: com.example.myapplication.model.CartItem,
+    onRemove: () -> Unit,
+    onUpdateQuantity: (Int) -> Unit
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -254,7 +258,7 @@ fun CartItem(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = flower.emoji,
+                    text = cartItem.flower.emoji,
                     style = MaterialTheme.typography.displayMedium
                 )
             }
@@ -266,7 +270,7 @@ fun CartItem(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = flower.name,
+                    text = cartItem.flower.name,
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.Black,
                     fontWeight = FontWeight.Medium
@@ -275,15 +279,51 @@ fun CartItem(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = flower.category,
+                    text = cartItem.flower.category,
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFFE91E63)
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
+                // Контрол количества
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    IconButton(
+                        onClick = { onUpdateQuantity(cartItem.quantity - 1) },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Text(
+                            text = "-",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.Gray
+                        )
+                    }
+
+                    Text(
+                        text = cartItem.quantity.toString(),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    IconButton(
+                        onClick = { onUpdateQuantity(cartItem.quantity + 1) },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Text(
+                            text = "+",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(0xFFE91E63)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
                 Text(
-                    text = "%.0f ₽".format(flower.price),
+                    text = "%.0f ₽".format(cartItem.totalPrice),
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color(0xFFE91E63),
                     fontWeight = FontWeight.Bold
@@ -310,7 +350,9 @@ fun CartItem(
 @Composable
 fun CartScreenPreview() {
     MaterialTheme {
+        val cartViewModel = androidx.lifecycle.viewmodel.compose.viewModel<com.example.myapplication.ui.viewmodel.CartViewModel>()
         CartScreen(
+            cartViewModel = cartViewModel,
             onBackClick = { println("Back clicked") },
             onCheckoutClick = { println("Checkout clicked") }
         )
@@ -321,7 +363,9 @@ fun CartScreenPreview() {
 @Composable
 fun EmptyCartScreenPreview() {
     MaterialTheme {
+        val cartViewModel = androidx.lifecycle.viewmodel.compose.viewModel<com.example.myapplication.ui.viewmodel.CartViewModel>()
         CartScreen(
+            cartViewModel = cartViewModel,
             onBackClick = { println("Back clicked") },
             onCheckoutClick = { println("Checkout clicked") }
         )
@@ -333,16 +377,20 @@ fun EmptyCartScreenPreview() {
 fun CartItemPreview() {
     MaterialTheme {
         CartItem(
-            flower = com.example.myapplication.model.Flower(
-                id = 1,
-                name = "Красные розы",
-                description = "Букет из 25 свежих красных роз",
-                price = 2500.0,
-                imageRes = android.R.drawable.ic_menu_report_image,
-                category = "Розы",
-                emoji = "🌹"
+            cartItem = com.example.myapplication.model.CartItem(
+                flower = com.example.myapplication.model.Flower(
+                    id = 1,
+                    name = "Красные розы",
+                    description = "Букет из 25 свежих красных роз",
+                    price = 2500.0,
+                    imageRes = android.R.drawable.ic_menu_report_image,
+                    category = "Розы",
+                    emoji = "🌹"
+                ),
+                quantity = 2
             ),
-            onRemove = { println("Remove clicked") }
+            onRemove = { println("Remove clicked") },
+            onUpdateQuantity = { quantity -> println("Update quantity to $quantity") }
         )
     }
 }
